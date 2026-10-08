@@ -36,3 +36,13 @@ gremlins-report*.json
 # tracked via .gitkeep so the layout is discoverable from a fresh clone.
 /data/*/*
 !/data/*/.gitkeep
+
+# Fine-tuning (ADR 0012): datasets built from real Claude Code sessions, checkpoints
+# and exported bundles can contain code and secrets from other projects - never commit.
+/dataset/
+/training/runs/
+/training/.venv/
+/training/cache/
+*.safetensors
+*.onnx
+*.onnx.data
