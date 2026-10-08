@@ -86,7 +86,21 @@ Outras duas formulações, na tentativa de achar uma que separe: (A) polaridade 
 
 **Leitura (limitada):** em três formulações, a variação entre perguntas ficou em ~0,02–0,05 e a resposta acompanhou a polaridade da pergunta, não o conteúdo. Com `keepThreshold = 0,5`, a formulação do original mantém **tudo** (redução 0, fallback sempre). A ordenação dos `result_*` da formulação 1 (t6 maior, t2 menor) aponta o sentido certo, mas `t1` não caiu. **Limites da evidência:** um único cenário sintético, seis perguntas por formulação, sem repetição. Não prova que o modelo seja inútil; prova que ele **não funciona zero-shot nesta tarefa com este desenho**, e que sozinho não substitui o Jev. Lembrando que o card do Laya descreve o uso pretendido como triagem de e-mail, guardrails e roteamento, com adaptação por fine-tuning para outros domínios.
 
-**Caminhos possíveis** (decisão do mantenedor, antes de investir mais):
+### Avaliação em corpus rotulado (40 cenários, 137 perguntas)
+
+Para sair da amostra de um cenário: [`tools/corpus`](../../../tools/corpus/main.go) gera cenários sintéticos com rótulos **por construção**, e o estado de cada um é montado pelo `FitState` de produção (inclui estágios comprimidos). Tipos: `superseded` (arquivo lido e depois editado/relido → apagável), `irrelevant` (documento nunca mais citado → apagável), `error_fixed` (falha depois corrigida e retestada → apagável), `cited` (conteúdo usado no raciocínio seguinte → manter), `error_cited` (erro em que os passos seguintes se apoiam → manter). 85 perguntas "apagável", 52 "manter". O avaliador é [`spike/phase0/eval.go`](../../../spike/phase0/eval.go); o corpus, [`testdata/probe/corpus.json`](../../../testdata/probe/corpus.json).
+
+| Formulação | AUC | Acurácia em 0,5 (limiar do algoritmo) | Melhor acurácia (limiar ótimo) |
+|---|---:|---:|---:|
+| original (`should stay … verbatim`) | **0,445** | 0,387 | 0,635 |
+| A (inverte: "pode ser apagado") | **0,548** | 0,620 | 0,635 |
+| B (curta, com descrições false/true) | **0,451** | 0,380 | 0,620 |
+
+Linha de base (sempre responder "apagar"): 0,620. Médias de P(manter) por tipo, formulação original: `superseded` 0,780, `irrelevant` 0,740, `error_fixed` 0,767, `cited` 0,751, `error_cited` 0,745 — **praticamente iguais** entre os tipos que deveriam ser manter e apagar.
+
+**Conclusão: ao nível do acaso.** Com 137 perguntas o erro-padrão do AUC é ~0,05; os três valores (0,445–0,548) são indistinguíveis de 0,5. A acurácia no limiar do algoritmo (0,5) fica **abaixo** da linha de base nas duas formulações de polaridade "manter". O cenário é favorável (os sinais são textuais e claros: o mesmo caminho aparece depois em `Edit`/`Read`, ou é citado no texto do assistente), então não há motivo para esperar melhora em transcripts reais. Isso responde ao caminho 1 abaixo e **também descarta o caminho 2** (ranking relativo): a ordem das probabilidades não carrega sinal.
+
+**Caminhos possíveis** (decisão do mantenedor; 1 e 2 já avaliados e descartados pelos números acima):
 1. **Ranking relativo em vez de limiar absoluto**: apagar os X% com menor P(manter) dentro da sessão. Usa a ordem, não o valor. Precisa de avaliação em corpus maior para ver se a ordem tem sinal.
 2. **Heurísticas determinísticas como sinal principal** (mesmo recurso lido/editado depois, tamanho do resultado, erro já corrigido) e o Laya como desempate. Perde a fidelidade ao original.
 3. **Ajustar (fine-tune) o Laya** para esta tarefa. Exige dados rotulados e treino; fora do escopo atual e do formato de bundle v1 (que só aceita o perfil publicado).

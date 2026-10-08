@@ -291,3 +291,7 @@ func withoutIndexes(history []HistoryEntry, drop map[int]bool) []HistoryEntry {
 	}
 	return out
 }
+
+// MarshalState serialises a State exactly as the model should see it: compact
+// JSON without HTML escaping (json.Marshal would turn < > & into < etc.).
+func MarshalState(s State) []byte { return []byte(marshal(s)) }

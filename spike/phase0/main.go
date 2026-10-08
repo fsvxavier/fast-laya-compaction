@@ -135,6 +135,10 @@ func main() {
 	model := must(rt.OpenModelDir(ctx, os.Getenv("LAYA_BUNDLE_DIR"), laya.ModelOptions{}))
 	defer model.Close(ctx)
 	fmt.Printf("model load: %.0f ms\n", ms(time.Since(t0)))
+	if path := os.Getenv("EVAL"); path != "" {
+		evalCorpusRun(ctx, model, path, os.Getenv("QPHRASE"))
+		return
+	}
 	if os.Getenv("PROBE") == "1" {
 		probe(ctx, model)
 		return
