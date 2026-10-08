@@ -1,0 +1,14 @@
+# 10 — Riscos
+
+| # | Risco | Prob. | Impacto | Mitigação | Gatilho de revisão |
+|---|---|---|---|---|---|
+| R1 | **Exportação do bundle não funciona como documentado.** O runbook `official-export-v1` do `laya-go` não especifica versões de Python, dependências nem a origem da `libtokenizers`. | Alta | Alto — sem bundle não há inferência | Fase 0 é um spike dedicado a isso, antes de qualquer outra fase. Registrar no `versions.env` tudo o que funcionar. | Fase 0 falha → reabrir [ADR 0004](../adrs/0004-inferencia-in-process-com-laya-go-onnx.md) e avaliar o cliente HTTP do `lengoman/laya-go` com servidor Python |
+| R2 | **Qualidade das decisões no estado em janela.** Com ~800 tokens, o modelo vê uma fração da sessão; pode apagar o que ainda importa. | Média | Alto — perda de contexto útil | Prioridade "mesmo recurso"; política conservadora (`unfit` = keep); `minReductionRatio`; o assistente sempre pode re-executar a ferramenta. Avaliação com `--report`. | Avaliação mostra `call_dropped` em chamadas obviamente necessárias → subir `keepThreshold` padrão ou testar `InputTokenLimit` maior |
+| R3 | **Estimativa de tokens desalinhada do tokenizer do mmBERT.** | Alta | Médio — `ErrInputTooLong` frequente, mais `unfit` | Retries com ×0,85; `tokenScale` calibrado na Fase 3 com `Usage.InputTokens`. | > 1% de `ErrInputTooLong` no corpus |
+| R4 | **API pré-v1 do `laya-go` muda.** | Média | Médio | Versão fixada no `go.mod`; todo uso isolado em `internal/layaasker`. | Nova versão com breaking change |
+| R5 | **Function hooks do Claude Code mudam.** Estão em acesso antecipado. | Média | Médio | Hook fino; tipos regenerados por versão; testes do hook com `$` falso. | Atualização do Claude Code quebra o plugin |
+| R6 | **Plataforma.** Só linux/amd64 é qualificado pelo `laya-go`. | Baixa (WSL2 é linux/amd64) | Médio | Escopo limitado a linux/amd64; Docker como alternativa. | Demanda por macOS/arm64 |
+| R7 | **Latência.** Sessões com centenas de chamadas candidatas → centenas de inferências em sequência. | Média | Médio — o hook estoura `timeoutMs` e faz fallback | `windowCalls` configurável; medir na Fase 3; `timeoutMs` configurável. | p95 de compactação > 20 s no corpus |
+| R8 | **Consumo de memória** (~2 GiB) incomoda em máquinas pequenas. | Baixa | Baixo | Documentar; daemon pode ser parado quando não usado (o hook faz fallback). | — |
+| R9 | **Exposição do daemon na rede.** Transcripts contêm código e possivelmente segredos. | Baixa | Alto | Loopback por padrão; `--allow-remote` explícito; Docker com `-p 127.0.0.1:…`; logs sem conteúdo. | — |
+| R10 | **Licenças.** Laya (Apache 2.0), `laya-go` (MIT), ONNX Runtime (MIT), original (MIT). | Baixa | Baixo | `NOTICE` com atribuições; manter o aviso Apache 2.0 do modelo ao redistribuir o bundle na imagem Docker. | Distribuição pública da imagem |

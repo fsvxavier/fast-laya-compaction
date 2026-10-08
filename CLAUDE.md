@@ -4,7 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-As of 2026-10-08 the repo has no commits and no source code: there is no `go.mod`, `Makefile`, README or tests, and `Project/` is empty. Only tooling config exists (`.claude/` with Go skills and a graphify hook, `.kilo/agents/data.md`, `.gitignore`). Do not assume build/test commands exist; add them here once code lands.
+As of 2026-10-08 the repo has no source code yet: there is no `go.mod`, `Makefile` or tests. Do not assume build/test commands exist; add them here once code lands.
+
+The project is a Go port of `tamaratran/fast-jev-compaction` that swaps the paid Jev model for the open Laya model run locally (`metalagman/laya-go` + ONNX Runtime, cgo tag `laya_native`), exposed as a local daemon (`fast-laya serve`) called by a thin TypeScript Claude Code hook. The full design lives in `Project/` (Portuguese):
+- `Project/description/` — spec; `03-algoritmo.md` is the algorithm (faithful port of stages 1–7 plus the new `windowed` stage, needed because Laya accepts only 1,024 tokens vs Jev's ~30k).
+- `Project/adrs/` — 11 ADRs (Nygard format); a changed decision gets a new ADR that supersedes the old one.
+- `Project/docs/plans/` — validated design and phased implementation plan; Phase 0 (export the bundle and run a real `Predict`) gates ADR 0004.
+- `Project/references/` — analysis of the original repo (constants, fixed prompt texts) and of the Laya bindings.
+
+Docs are written in Portuguese; code identifiers and comments in English.
 
 The `.gitignore` appears copied from a different Go project (references `cmd/rest`, `cmd/lintopenapi`, `cmd/cacaushowprobe`, `pkg/config` loading `.env` via godotenv, `data/{cacaushow,cielo,banco}`). It hints at conventions (Go, `cmd/<x>` entrypoints, secrets only in untracked `.env`, `.env.example` tracked) but does not describe this repo's actual layout. Prune it when real structure is known.
 
