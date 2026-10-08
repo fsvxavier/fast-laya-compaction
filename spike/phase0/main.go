@@ -54,6 +54,78 @@ func state(entries int) laya.State {
 
 func ms(d time.Duration) float64 { return float64(d.Microseconds()) / 1000 }
 
+// probe asks questions whose right answer a human can tell: is the model's
+// P(true) discriminating, or does it say ~0.85 to everything?
+func probe(ctx context.Context, model *laya.Model) {
+	type tc struct{ ID, Tool, Input, Result string }
+	entry := func(i int, role, text string, c ...tc) map[string]any {
+		e := map[string]any{"i": i, "role": role, "text": text}
+		if len(c) > 0 {
+			e["tool_calls"] = c
+		}
+		return e
+	}
+	history := []map[string]any{
+		entry(0, "user", "Fix the failing test TestParse in pkg/parser. Do not touch generated files."),
+		entry(1, "assistant", "", tc{"t1", "Read", `{"file_path":"/repo/pkg/parser/parse.go"}`, "ok, 5210 chars (omitted)"}),
+		entry(2, "assistant", "", tc{"t2", "Read", `{"file_path":"/repo/docs/CHANGELOG.md"}`, "ok, 9800 chars (omitted)"}),
+		entry(3, "assistant", "", tc{"t3", "Bash", `{"command":"go test ./pkg/parser"}`, "error, 1830 chars (omitted)"}),
+		entry(4, "assistant", "", tc{"t4", "Read", `{"file_path":"/repo/pkg/parser/parse.go"}`, "ok, 5210 chars (omitted)"}),
+		entry(5, "assistant", "", tc{"t5", "Edit", `{"file_path":"/repo/pkg/parser/parse.go","old_string":"i < n","new_string":"i <= n"}`, "ok, 120 chars (omitted)"}),
+		entry(6, "assistant", "", tc{"t6", "Bash", `{"command":"go test ./pkg/parser"}`, "ok, 40 chars (omitted)"}),
+		entry(7, "assistant", "All tests pass now."),
+	}
+	b, _ := json.Marshal(map[string]any{
+		"context": "A coding assistant conversation is being compacted to free context. `history` is the whole conversation so far, oldest first; tool outputs are replaced by a short `result` note and long texts may be abridged. Each question asks whether one tool call, or the full output of that call, still needs to stay in the history verbatim. Whatever is not kept is deleted permanently, but the assistant can always re-run a tool or re-read a file.",
+		"goal":    "Fix the failing test TestParse in pkg/parser. Do not touch generated files.",
+		"history": history,
+	})
+	st := must(laya.JSONState(b))
+	phrase := os.Getenv("QPHRASE")
+	resultQ := func(id, tool string, chars int) laya.Question {
+		switch phrase {
+		case "A": // inverted polarity: P(true) = safe to delete
+			return must(laya.NewNoulQuestion(laya.QuestionID("result_"+id),
+				fmt.Sprintf("The output of tool call %s (%s, %d chars) is now obsolete or redundant and can be safely deleted from the history", id, tool, chars), "", ""))
+		case "B": // original polarity with steering descriptions
+			return must(laya.NewNoulQuestion(laya.QuestionID("result_"+id),
+				fmt.Sprintf("Is the full output of tool call %s (%s, %d chars) still needed?", id, tool, chars),
+				"no: it was superseded by a later call, is unrelated to the goal, or can simply be re-obtained",
+				"yes: later steps depend on details that only this output contains"))
+		}
+		return must(laya.NewNoulQuestion(laya.QuestionID("result_"+id),
+			fmt.Sprintf("The full output of tool call %s (%s, %d chars) should stay in the history verbatim: the assistant still needs its contents and re-running the tool would not do", id, tool, chars), "", ""))
+	}
+	callQ := func(id, tool string) laya.Question {
+		if phrase == "A" {
+			return must(laya.NewNoulQuestion(laya.QuestionID("call_"+id),
+				fmt.Sprintf("Tool call %s (%s) is irrelevant to the goal and can be safely deleted from the history", id, tool), "", ""))
+		}
+		if phrase == "B" {
+			return must(laya.NewNoulQuestion(laya.QuestionID("call_"+id),
+				fmt.Sprintf("Does it still matter that tool call %s (%s) was made?", id, tool),
+				"no: it is unrelated to the goal or was superseded", "yes: it is part of the work done toward the goal"))
+		}
+		return must(laya.NewNoulQuestion(laya.QuestionID("call_"+id),
+			fmt.Sprintf("Tool call %s (%s) should stay in the history: knowing this call was made, with its input, still matters for what the assistant does next", id, tool), "", ""))
+	}
+	qs := []laya.Question{
+		resultQ("t1", "Read", 5210), // superseded by t4 re-read and t5 edit: expect low
+		resultQ("t2", "Read", 9800), // unrelated CHANGELOG: expect low
+		resultQ("t3", "Bash", 1830), // failing output, since fixed: expect lowish
+		resultQ("t6", "Bash", 40),   // final passing run: expect higher
+		callQ("t2", "Read"),         // reading an unrelated file: expect low
+		callQ("t5", "Edit"),         // the actual fix: expect high
+	}
+	start := time.Now()
+	p := must(model.Predict(ctx, st, qs))
+	fmt.Printf("probe: %d questions, %d input tokens, %.0f ms\n", len(qs), p.Usage().InputTokens, ms(time.Since(start)))
+	for _, r := range p.Results() {
+		n := r.(laya.NoulResult)
+		fmt.Printf("  %-10s P(true)=%.4f\n", n.QuestionID(), n.TrueProbability())
+	}
+}
+
 func main() {
 	os.Setenv("ORT_DISABLE_TELEMETRY", "1")
 	ctx := context.Background()
@@ -63,6 +135,10 @@ func main() {
 	model := must(rt.OpenModelDir(ctx, os.Getenv("LAYA_BUNDLE_DIR"), laya.ModelOptions{}))
 	defer model.Close(ctx)
 	fmt.Printf("model load: %.0f ms\n", ms(time.Since(t0)))
+	if os.Getenv("PROBE") == "1" {
+		probe(ctx, model)
+		return
+	}
 
 	fmt.Println("\n== latency by state size and question count (median of 5, after 1 warmup) ==")
 	fmt.Printf("%-8s %-10s %-12s %-12s %-10s\n", "entries", "questions", "inputTokens", "median ms", "ms/question")

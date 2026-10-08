@@ -67,6 +67,6 @@ Fora do escopo: GPU, checkpoints `english`/`typed-decisions`, resumo por LLM, UI
 
 1. Origem e versão exatas da `libtokenizers` esperada pelo `laya-go` (Fase 0).
 2. Versões de Python e dependências do runbook de exportação (Fase 0).
-3. Se o bundle exportado aceita `InputTokenLimit` > 1.024 e com que latência (experimento opcional, Fase 3).
+3. ~~Se o bundle aceita `InputTokenLimit` > 1.024~~ — **resolvido na Fase 0: não**; o `laya-go` só reduz o limite (`max_len = 1024`).
 4. Valores calibrados de `tokenScale` e `questionOverheadTokens` (Fase 3).
 5. Se function hooks expõem `$.session.usage()` e `$.http.fetch` com timeout nativo na versão atual do Claude Code (Fase 5).

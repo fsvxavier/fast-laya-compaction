@@ -27,10 +27,10 @@
 
 1. Clonar `metalagman/laya-go` na tag `v0.2.6`; ler `docs/official-export-v1.md`, `docs/bundle-format-v1.md` e os `Taskfile`.
 2. Descobrir e registrar: versão de Python, dependências, origem e versão da `libtokenizers`, URL e SHA-256 do ONNX Runtime 1.29.0 linux-x64.
-3. Rodar `task reference:verify-source`, `reference:verify-sdk`, `bundle:export`, `bundle:verify`. Registrar tempo, disco e RAM.
+3. Rodar o export (`uv run … laya_export.cli … export`, equivalente a `task bundle:export`). Registrar tempo, disco e RAM. *(feito)*
 4. Programa mínimo com `-tags laya_native`: `NewRuntime` → `OpenModelDir` → `Predict(JSONState(estado de exemplo), [2 NoulQuestion])`. Imprimir probabilidades, `Usage` e latência (10 execuções).
 5. Testar o limite: estado crescente até `ErrInputTooLong`; registrar o `InputTooLongError`.
-6. (Opcional) `InputTokenLimit: 2048` e `4096`: o bundle aceita? latência?
+6. ~~`InputTokenLimit` 2048/4096~~ — *não executável*: o `laya-go` só reduz o limite do bundle.
 7. Escrever `scripts/versions.env` com tudo o que funcionou.
 
 **Saída:** nota em `Project/docs/plans/fase-0-resultado.md` com os números. Se falhar em 3 ou 4, abrir ADR substituindo a 0004 (plano B: `lengoman/laya-go` + servidor Python) e ajustar fases 3, 4 e 6.
@@ -87,9 +87,9 @@ Ordem pensada para cada passo depender só dos anteriores. Cada item: teste port
 5. `fast-laya compact --report` (pode nascer aqui, antes do daemon).
 6. Calibrar `tokenScale` e `questionOverheadTokens`; atualizar padrões e a [ADR 0007](../../adrs/0007-estimativa-de-tokens-e-calibracao.md) com os números (como adendo, não reescrita).
 7. Medir latência por inferência e por compactação; comparar com RNF-03.
-8. (Opcional) experimento `InputTokenLimit` maior; se promissor, ADR nova.
+8. Exportar `State` sem escape HTML (`json.Marshal` escaparia `<`, `>`, `&` como `\u003c`) e limitar `InputTokenLimit` a ≤ 1.024 no adaptador/daemon.
 
-**Pronto quando:** < 1% de `ErrInputTooLong` no corpus; p50 ≤ 50 ms por inferência.
+**Pronto quando:** < 1% de `ErrInputTooLong` no corpus; latência por pergunta medida no corpus e a compactação cabe em `timeoutMs` ou mantém o restante (`unfit`); discriminação do modelo avaliada (ver sonda de contraste em [fase-0-resultado.md](fase-0-resultado.md)).
 
 ---
 

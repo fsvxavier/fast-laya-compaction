@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-Status (2026-10-08): Phase 0 (native Laya spike) done and Phase 1 (`internal/compaction` core) in progress; see `Project/docs/plans/fase-0-resultado.md` for measured latency (~1.8 ms/token/question, so time per compaction is the main open design question).
+Status (2026-10-08): Phase 0 (native Laya spike) done and Phase 1 (`internal/compaction` core) in progress; see `Project/docs/plans/fase-0-resultado.md`: measured latency is ~1.6-2.5 ms/token/question, and a quality probe showed the zero-shot model does NOT discriminate obsolete from needed tool calls (P(true) 0.76-0.96 for everything). Model quality is the main open question, ahead of latency.
 
 Commands: `make test` (= `go test ./...`, no cgo or model needed), `go test -run TestName ./internal/compaction/`, `make lint` (= `go vet ./...`). The cgo/Laya path (`-tags laya_native`, needs `libtokenizers.a` via `CGO_LDFLAGS=-L…`, ONNX Runtime and the exported bundle; pins in `scripts/versions.env`) is only exercised by `spike/phase0/` (separate Go module) until the adapter lands in Phase 3. Never use git worktrees in this repo.
 

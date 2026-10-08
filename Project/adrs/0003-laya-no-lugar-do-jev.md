@@ -29,3 +29,7 @@ Usaremos o Laya, checkpoint **`laya-multilingual-v1`** (mmBERT-base, 322M parâm
 - A janela de 1.024 tokens obriga a um estágio novo de montagem do estado (ADR 0006); o comportamento deixa de ser idêntico ao original em sessões longas.
 - A qualidade das decisões não é comparável diretamente com a do Jev; a avaliação usa corpus próprio ([09](../description/09-testes-e-avaliacao.md)).
 - Ganho colateral: o checkpoint multilíngue entende sessões em português.
+
+## Adendo (2026-10-08) — sonda de qualidade da Fase 0
+
+Em um cenário sintético com respostas óbvias para um humano, o checkpoint multilíngue **não discriminou** zero-shot: P(true) entre 0,76 e 0,96 para todas as perguntas, em três formulações (ver [fase-0-resultado.md](../docs/plans/fase-0-resultado.md#sonda-de-qualidade-discriminação-do-modelo)). A premissa "o Laya faz o papel do Jev" está, portanto, **não confirmada**. Esta ADR segue aceita; uma ADR nova deve substituí-la se a avaliação em corpus maior confirmar a falta de sinal.

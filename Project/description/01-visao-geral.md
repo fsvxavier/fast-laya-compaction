@@ -40,7 +40,7 @@ A janela de 1.024 tokens é a maior consequência técnica da troca e motiva o [
 ## Critérios de sucesso
 
 - Em uma sessão real com dezenas de tool calls, a compactação termina sem fallback e reduz o transcript em pelo menos 25% (o `minReductionRatio` padrão).
-- Uma compactação de 100 chamadas candidatas termina em menos de 10 s numa máquina com 4 vCPUs.
+- Uma compactação termina dentro de `timeoutMs` do hook, ou mantém o que não deu tempo de avaliar (`unfit`); a meta numérica de tempo depende das decisões pendentes da Fase 0 (medido: ~0,3–2,3 s por pergunta).
 - Nenhum byte do transcript sai da máquina; nenhuma chave de API é necessária.
 - Os casos de teste do original, portados, passam com o `fakelaya`.
 

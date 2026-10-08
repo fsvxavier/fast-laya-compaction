@@ -58,7 +58,7 @@ O estado vai para o Laya como `laya.JSONState(json.Marshal(state))`. A serializa
 
 ## 4. Orçamentos [novo]
 
-O limite efetivo `L` vem do bundle (1.024 no `laya-multilingual-v1`) ou de `InputTokenLimit`.
+O limite efetivo `L` vem do bundle (`max_len = 1024` no `laya-multilingual-v1`) ou de um `InputTokenLimit` **menor** (o `laya-go` ignora valores acima do limite do bundle).
 
 | Opção | Padrão | Derivação |
 |---|---:|---|
@@ -67,7 +67,7 @@ O limite efetivo `L` vem do bundle (1.024 no `laya-multilingual-v1`) ou de `Inpu
 | `windowCalls` | 2 | 4 perguntas por janela |
 | `tokenScale` | 1,0 | multiplicador da estimativa; calibrado na Fase 3 |
 
-Se o usuário só alterar `InputTokenLimit`, os dois orçamentos são recalculados pelas fórmulas acima. Valores explícitos sempre prevalecem.
+Se o usuário só alterar `InputTokenLimit` (para menos, nunca acima de 1.024), os dois orçamentos são recalculados pelas fórmulas acima. Valores explícitos sempre prevalecem.
 
 ## 5. Estimativa de tokens
 

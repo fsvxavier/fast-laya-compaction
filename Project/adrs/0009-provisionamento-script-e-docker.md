@@ -6,7 +6,7 @@
 
 ## Contexto
 
-O caminho nativo do `laya-go` precisa de três artefatos locais que a biblioteca, por desenho, não baixa: `libonnxruntime` 1.29.0, `libtokenizers` e um bundle exportado do checkpoint `convaiinnovations/laya-multilingual@052592a`. A exportação usa Python e `go-task` uma única vez. O ambiente principal do mantenedor é WSL2.
+O caminho nativo do `laya-go` precisa de três artefatos locais que a biblioteca, por desenho, não baixa: `libonnxruntime` 1.29.0, `libtokenizers.a` e um bundle exportado do checkpoint `convaiinnovations/laya-multilingual@052592a`. A exportação usa Python e `go-task` uma única vez. O ambiente principal do mantenedor é WSL2.
 
 ## Decisão
 

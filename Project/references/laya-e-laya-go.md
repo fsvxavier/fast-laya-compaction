@@ -14,7 +14,7 @@ Levantamento feito em 2026-10-08. Itens marcados **(não verificado)** precisam 
 | Checkpoint | Base | Parâmetros | Contexto | Tamanho |
 |---|---|---:|---:|---:|
 | english | ModernBERT-large + cabeça de decisão | 421M | 512 tokens | ~808 MB |
-| multilingual | mmBERT-base (22 camadas, vocab 256k) | 322M | 1.024 tokens (extensível a 8.192) | ~647 MB |
+| multilingual | mmBERT-base (22 camadas, vocab 256k) | 322M | 1.024 tokens (o card cita "extensível a 8.192", mas o bundle v1 declara `max_len = 1024` e o `laya-go` só reduz o limite) | ~647 MB |
 | typed-decisions | ModernBERT-large ajustado | — | 1.024 tokens | — |
 
 Relação com o Jev: ambos expõem a mesma abstração (estado + perguntas `noul` → probabilidades). O contrato de perguntas do `fast-jev-compaction` (`{type: 'noul', instructions, criteria: {true, false}}`) mapeia diretamente para `NoulQuestion` do Laya. A diferença decisiva é a janela: o Jev aceitava ~30k tokens por requisição; o Laya multilíngue, 1.024.

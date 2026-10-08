@@ -24,7 +24,7 @@ Todas as versões e SHA-256 ficam em `scripts/versions.env`, a única fonte de v
 `scripts/provision.sh`, idempotente — cada passo é pulado se o artefato já existe com o SHA-256 esperado:
 
 ```
-1. checa pré-requisitos (uname = Linux x86_64, gcc, go, python3 ≥ 3.10, task, curl, sha256sum)
+1. checa pré-requisitos (uname = Linux x86_64, gcc, go ≥ 1.26.6, uv, curl, sha256sum, git)
 2. baixa ONNX Runtime 1.29.0 → ~/.local/share/fast-laya/lib/        (verifica SHA-256)
 3. baixa libtokenizers.a       → ~/.local/share/fast-laya/lib/        (verifica SHA-256)
 4. baixa o checkpoint (revisão fixa, SHA-256 por arquivo) e o SDK NandhaKishorM/laya (commit fixo) → ~/.cache/fast-laya/
@@ -58,9 +58,9 @@ O README trará uma unidade `systemd --user` de exemplo (`~/.config/systemd/user
 `Dockerfile` multi-stage:
 
 ```dockerfile
-# 1. exporter — Python + go-task; gera o bundle
+# 1. exporter — uv (+ Python 3.13 gerenciado pelo uv); gera o bundle
 FROM python:3.12-slim AS exporter
-# instala task, clona laya-go na tag fixada, roda o runbook official-export-v1,
+# clona laya-go na tag fixada, `uv sync --frozen` e roda o runbook official-export-v1,
 # deixa o bundle verificado em /out/bundle
 
 # 2. libs — baixa ONNX Runtime e libtokenizers, verifica SHA-256 → /out/lib

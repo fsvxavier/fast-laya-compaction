@@ -2,7 +2,7 @@
 
 Compactação de sessões do Claude Code **sem resumo, local e sem custo**: porte em Go do [`fast-jev-compaction`](references/fast-jev-compaction.md), trocando o modelo pago Jev pelo modelo aberto [Laya](references/laya-e-laya-go.md), executado em CPU dentro de um daemon local.
 
-> Status: **documentação**. Nenhum código foi escrito ainda; a implementação segue o [plano](docs/plans/2026-10-08-fast-laya-compaction-implementation.md), começando pelo spike de viabilidade da Fase 0.
+> Status: Fase 0 concluída e Fase 1 (núcleo `internal/compaction`) em andamento. A inferência nativa do Laya funciona no WSL2, mas a sonda de qualidade não mostrou discriminação do modelo zero-shot e a latência é alta: leia [fase-0-resultado.md](docs/plans/fase-0-resultado.md) antes de continuar. Plano: [implementação](docs/plans/2026-10-08-fast-laya-compaction-implementation.md).
 
 ## Em uma página
 
