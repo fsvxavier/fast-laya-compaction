@@ -9,9 +9,9 @@ Precedência no daemon: **flag > variável de ambiente > `.env` gerado pelo prov
 | `--addr` | `FAST_LAYA_ADDR` | `127.0.0.1:8610` | Endereço de escuta |
 | `--allow-remote` | `FAST_LAYA_ALLOW_REMOTE` | `false` | Permite endereço que não seja loopback |
 | `--onnxruntime-lib` | `LAYA_ONNXRUNTIME_LIBRARY` | — (obrigatória) | Caminho de `libonnxruntime.so.1.29.0` |
-| `--tokenizers-lib` | `LAYA_TOKENIZERS_LIBRARY` | — (obrigatória) | Caminho de `libtokenizers` |
+| `--tokenizers-lib` | `LAYA_TOKENIZERS_LIBRARY` | — (obrigatória) | Caminho de `libtokenizers.a` (estática; também usada em build via `CGO_LDFLAGS=-L`) |
 | `--bundle-dir` | `LAYA_BUNDLE_DIR` | — (obrigatória) | Diretório do bundle `laya-multilingual-v1` |
-| `--input-token-limit` | `FAST_LAYA_INPUT_TOKEN_LIMIT` | limite do bundle | Sobrescreve `ModelOptions.InputTokenLimit` (experimental; ver [ADR 0006](../adrs/0006-estagio-de-janela-por-lote.md)) |
+| `--input-token-limit` | `FAST_LAYA_INPUT_TOKEN_LIMIT` | limite do bundle (1.024) | **Só reduz** o limite do bundle (`laya-go` ignora valores maiores); útil para testar janelas menores |
 | `--token-scale` | `FAST_LAYA_TOKEN_SCALE` | `1.0` | Multiplicador da estimativa de tokens |
 | `--max-body` | `FAST_LAYA_MAX_BODY` | `64MiB` | Limite do corpo da requisição |
 | `--shutdown-timeout` | `FAST_LAYA_SHUTDOWN_TIMEOUT` | `30s` | Espera pela compactação em curso ao encerrar |
@@ -45,7 +45,7 @@ Ver [06 — userConfig](06-plugin-claude-code.md#userconfig-pluginclaude-pluginp
 
 ```sh
 LAYA_ONNXRUNTIME_LIBRARY=/home/<user>/.local/share/fast-laya/lib/libonnxruntime.so.1.29.0
-LAYA_TOKENIZERS_LIBRARY=/home/<user>/.local/share/fast-laya/lib/libtokenizers.so
+LAYA_TOKENIZERS_LIBRARY=/home/<user>/.local/share/fast-laya/lib/libtokenizers.a
 LAYA_BUNDLE_DIR=/home/<user>/.local/share/fast-laya/bundle/laya-multilingual-v1
 ```
 

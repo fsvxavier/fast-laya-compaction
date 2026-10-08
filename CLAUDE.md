@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-As of 2026-10-08 the repo has no source code yet: there is no `go.mod`, `Makefile` or tests. Do not assume build/test commands exist; add them here once code lands.
+Status (2026-10-08): Phase 0 (native Laya spike) done and Phase 1 (`internal/compaction` core) in progress; see `Project/docs/plans/fase-0-resultado.md` for measured latency (~1.8 ms/token/question, so time per compaction is the main open design question).
+
+Commands: `make test` (= `go test ./...`, no cgo or model needed), `go test -run TestName ./internal/compaction/`, `make lint` (= `go vet ./...`). The cgo/Laya path (`-tags laya_native`, needs `libtokenizers.a` via `CGO_LDFLAGS=-L…`, ONNX Runtime and the exported bundle; pins in `scripts/versions.env`) is only exercised by `spike/phase0/` (separate Go module) until the adapter lands in Phase 3. Never use git worktrees in this repo.
 
 The project is a Go port of `tamaratran/fast-jev-compaction` that swaps the paid Jev model for the open Laya model run locally (`metalagman/laya-go` + ONNX Runtime, cgo tag `laya_native`), exposed as a local daemon (`fast-laya serve`) called by a thin TypeScript Claude Code hook. The full design lives in `Project/` (Portuguese):
 - `Project/description/` — spec; `03-algoritmo.md` is the algorithm (faithful port of stages 1–7 plus the new `windowed` stage, needed because Laya accepts only 1,024 tokens vs Jev's ~30k).

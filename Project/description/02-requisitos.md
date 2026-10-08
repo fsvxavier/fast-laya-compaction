@@ -27,7 +27,7 @@
 |---|---|
 | RNF-01 | **Custo zero por uso.** Nenhuma chamada a serviço pago; nenhuma chave de API. |
 | RNF-02 | **Privacidade.** O transcript nunca sai da máquina. O daemon escuta só em loopback por padrão. Logs não contêm conteúdo de mensagens por padrão. |
-| RNF-03 | **Desempenho.** ≤ 10 s para 100 chamadas candidatas em 4 vCPUs; ≤ 50 ms por inferência no p50 (o card do Laya no Hugging Face cita ~33 ms; **não verificado em CPU** com o `metalagman/laya-go` — medido na Fase 0). |
+| RNF-03 | **Desempenho.** *Revisado após a Fase 0.* A meta original (≤ 10 s para 100 candidatas; ≤ 50 ms por inferência) é inalcançável: medido ~1,8 ms por token e por pergunta em 8 vCPUs (0,3–2,3 s por pergunta). Meta provisória: uma compactação termina dentro de `timeoutMs` (padrão a rever, 120–180 s) ou mantém o restante (`unfit`) quando o tempo acaba. Valores finais dependem das decisões pendentes em [fase-0-resultado.md](../docs/plans/fase-0-resultado.md). |
 | RNF-04 | **Recursos.** Daemon com até 2 GiB de RAM residente; bundle com ~1,2 GiB de disco. |
 | RNF-05 | **Plataforma.** linux/amd64, incluindo WSL2. Outras plataformas ficam fora do suporte. |
 | RNF-06 | **Segurança de dados.** Em qualquer dúvida (erro, entrada que não cabe), manter. Nenhuma chamada é apagada sem uma resposta do modelo. |

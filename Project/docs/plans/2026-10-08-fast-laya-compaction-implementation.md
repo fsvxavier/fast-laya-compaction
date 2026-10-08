@@ -3,13 +3,13 @@
 - **Data:** 2026-10-08
 - **Base:** [design](2026-10-08-fast-laya-compaction-design.md)
 - **Método:** TDD — cada tarefa começa por um teste que falha. Uma tarefa = um commit pequeno.
-- **Convenções:** Go 1.25+, `gofmt`/`golangci-lint`, identificadores e comentários de código em inglês, documentação em português.
+- **Convenções:** Go 1.26.6+ (exigência do `laya-go`), `gofmt`/`golangci-lint`, identificadores e comentários de código em inglês, documentação em português.
 
 ## Visão das fases
 
 | Fase | Entrega | Depende de | Portão de saída |
 |---|---|---|---|
-| 0 | Spike de viabilidade do Laya nativo | — | `Predict` real com 2 perguntas `noul` no WSL2 |
+| 0 | Spike de viabilidade do Laya nativo | — | **Cumprido**: `Predict` real no WSL2 (ver [resultado](fase-0-resultado.md)) |
 | 1 | Núcleo `compaction` (estágios 1–7) com `fakelaya` | — (paralela à 0) | 20 casos portados passando; golden 1–7 iguais aos do original |
 | 2 | Estágio 8 `windowed`, `unfit`, retries | 1 | Casos novos e fuzz das invariantes passando |
 | 3 | Adaptador Laya + calibração | 0, 2 | `--report` no corpus com < 1% `ErrInputTooLong` |
@@ -19,7 +19,9 @@
 
 ---
 
-## Fase 0 — Spike de viabilidade (portão)
+## Fase 0 — Spike de viabilidade (portão) — **CONCLUÍDA em 2026-10-08**
+
+> Resultado em [fase-0-resultado.md](fase-0-resultado.md): o caminho nativo funciona; a latência medida (~1,8 ms por token e por pergunta) exige decisões antes da Fase 2. Spike em `spike/phase0/`, versões em `scripts/versions.env`.
 
 **Objetivo:** provar que o caminho da [ADR 0004](../../adrs/0004-inferencia-in-process-com-laya-go-onnx.md) funciona no WSL2 antes de investir no resto. Código descartável em `spike/`.
 

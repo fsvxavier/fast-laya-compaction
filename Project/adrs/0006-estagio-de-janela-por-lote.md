@@ -39,3 +39,9 @@ Especificação completa em [03 — Algoritmo, §8](../description/03-algoritmo.
 - Mais inferências: ~`candidatas / windowCalls`. Com ~33 ms cada (número do card do Laya, não verificado em CPU; medido na Fase 0), 100 candidatas ≈ 50 inferências ≈ 2 s.
 - Risco de decisões piores por falta de contexto (R2), mitigado pela política conservadora e pela avaliação.
 - Revisar esta ADR se o experimento com `InputTokenLimit` maior mostrar qualidade e latência aceitáveis.
+
+## Adendo (2026-10-08) — medições da Fase 0
+
+- Cada pergunta é uma sequência própria (estado + cabeça da pergunta + opções), com o limite de 1.024 tokens **por sequência**; perguntas não disputam o mesmo orçamento e o estado é recodificado para cada uma. Orçamento do estado de uma janela: `limite − tokens da maior pergunta (≈100–130) − margem`.
+- A estimativa de latência acima (~33 ms por inferência, 100 candidatas ≈ 2 s) **está errada**: medido ~1,8 ms por token e por pergunta, ou 0,3–2,3 s por pergunta conforme o tamanho do estado. O custo é linear no número de perguntas. Isto reforça estados de janela pequenos (~250–400 tokens) e abre a discussão da cascata de perguntas e de um teto de tempo; ver [fase-0-resultado.md](../docs/plans/fase-0-resultado.md#decisões-pendentes-para-o-mantenedor).
+- O experimento com `InputTokenLimit` maior **não é executável**: o `laya-go` só aceita reduzir o limite declarado pelo bundle (`max_len = 1024`). Subir exigiria outra exportação.

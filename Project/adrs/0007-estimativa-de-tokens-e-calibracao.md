@@ -30,3 +30,8 @@ O `laya-go` reporta `Usage.InputTokens` em cada `Prediction`, mas não expõe (p
 
 - Mesmo código de estimativa do original; diferença isolada em dois parâmetros.
 - A calibração depende de um corpus representativo; corpus ruim gera `unfit` demais ou retries demais.
+
+## Adendo (2026-10-08) — medições da Fase 0
+
+- Em uma amostra sintética (1–12 entradas no formato de uma linha por chamada), a heurística **superestima** o consumo real do mmBERT em ~25–35% (real/estimado 0,73–0,80). É o lado seguro; `tokenScale` ≈ 0,8 é o candidato, a confirmar na Fase 3 com corpus real.
+- `InputTooLongError` expõe `InputTokens` (contagem real observada) e `Limit`. O retry do passo 5 pode, portanto, recalcular o orçamento a partir da contagem real (`novoOrçamentoDoEstado = orçamentoAtual − (InputTokens − Limit) − margem`) em vez do corte cego de ×0,85.

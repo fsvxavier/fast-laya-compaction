@@ -1,6 +1,6 @@
 # 0004 — Inferência dentro do processo com `metalagman/laya-go` e ONNX Runtime
 
-- **Status:** Aceita (condicionada à Fase 0 do plano)
+- **Status:** Aceita (condição da Fase 0 cumprida em 2026-10-08; ver adendo)
 - **Data:** 2026-10-08
 - **Relacionadas:** ADR 0002, ADR 0003, ADR 0009
 
@@ -38,3 +38,9 @@ A decisão é **condicionada à Fase 0** do plano: exportar o bundle e executar 
 - Lotes são executados em sequência; o paralelismo do original (`Promise.all`) não se aplica.
 - Dependemos de uma API pré-v1 e de um caminho nativo "candidate": acompanhar releases (risco R4) e fixar versões.
 - Suporte limitado a linux/amd64 (inclui WSL2).
+
+## Adendo (2026-10-08) — resultado da Fase 0
+
+O caminho nativo **funciona** no WSL2: bundle exportado e verificado (`sha256:ca06dcb1…`), build `-tags laya_native`, inferência `noul` real. O plano B não é necessário. Detalhes e medições em [fase-0-resultado.md](../docs/plans/fase-0-resultado.md).
+
+Correções aos fatos desta ADR: `libtokenizers` é a biblioteca **estática** `libtokenizers.a` (ligada em build); a exportação usa `uv` e exige o SDK `NandhaKishorM/laya@573e5b6`; o `laya-go` exige Go 1.26.6+. A latência medida (~1,8 ms por token e por pergunta) torna o tempo por compactação o principal risco (R7).

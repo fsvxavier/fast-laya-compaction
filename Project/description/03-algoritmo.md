@@ -107,6 +107,8 @@ As chamadas candidatas, na ordem do transcript, são divididas em janelas de `wi
 
 ### 8.2 Orçamento da janela
 
+> **Nota (Fase 0).** No `laya-go` cada pergunta é uma sequência própria (`[CLS] noul question: … [SEP] <mask> false … <mask> true … [SEP] <estado> [SEP]`); o limite de 1.024 tokens vale por sequência, e o estado é recodificado para cada pergunta. As perguntas de uma janela, portanto, **não se somam**: o que limita é `estado + a maior pergunta (≈ 100–130 tokens com as descrições padrão das opções)`. A fórmula abaixo, que soma as perguntas, é a versão conservadora herdada do original e será refinada na Fase 3.
+
 ```
 questionTokens(W) = Σ custo das 2 perguntas de cada chamada de W
 stateBudget(W)    = maxRequestTokens − 20 − questionTokens(W)
