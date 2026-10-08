@@ -1,6 +1,9 @@
 package compaction
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	// ErrStateTooLarge means the history cannot be fitted into maxStateTokens
@@ -13,3 +16,16 @@ var (
 	// ErrInputTooLong is returned by an Asker when the model rejects the input size.
 	ErrInputTooLong = errors.New("input exceeds the model token limit")
 )
+
+// InputTooLongError is what an Asker returns when the model rejects an input
+// as too long; Observed and Limit are the model's own token counts when known.
+type InputTooLongError struct {
+	Observed int
+	Limit    int
+}
+
+func (e *InputTooLongError) Error() string {
+	return fmt.Sprintf("%s: %d tokens, limit %d", ErrInputTooLong, e.Observed, e.Limit)
+}
+
+func (e *InputTooLongError) Is(target error) bool { return target == ErrInputTooLong }

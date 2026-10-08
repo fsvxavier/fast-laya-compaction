@@ -2,6 +2,7 @@ package compaction
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"time"
@@ -67,34 +68,69 @@ func Compact(ctx context.Context, messages []Message, asker Asker, options Optio
 
 	stats := Stats{}
 	answers := map[string]CallAnswer{}
+	unfit := map[string]bool{}
 	if len(candidates) > 0 {
+		windowed := false
 		fitted, err := FitState(messages, calls, opts)
-		if err != nil {
+		switch {
+		case errors.Is(err, ErrStateTooLarge):
+			windowed = true
+		case err != nil:
 			return Result{}, err
 		}
-		stats.StateTokens, stats.StateStage = fitted.Tokens, fitted.Stage
-		batches, err := BatchCalls(candidates, fitted.Tokens, opts)
-		if err != nil {
-			return Result{}, err
+		var batches [][]ToolCall
+		if !windowed {
+			batches, err = BatchCalls(candidates, fitted.Tokens, opts)
+			switch {
+			case errors.Is(err, ErrNoRoomForQuestions):
+				windowed = true
+			case err != nil:
+				return Result{}, err
+			}
 		}
-		for _, batch := range batches {
-			if err := ctx.Err(); err != nil {
+		if windowed {
+			if err := compactWindowed(ctx, messages, calls, candidates, asker, opts, &stats, answers, unfit); err != nil {
 				return Result{}, err
 			}
-			got, raw, err := askBatch(ctx, asker, fitted.State, batch)
-			if err != nil {
-				return Result{}, err
-			}
-			stats.Requests++
-			stats.InputTokensReported += raw.InputTokens
-			for id, a := range got {
-				answers[id] = a
+		} else {
+			stats.StateTokens, stats.StateStage = fitted.Tokens, fitted.Stage
+			for _, batch := range batches {
+				if err := ctx.Err(); err != nil {
+					return Result{}, err
+				}
+				got, raw, err := askBatch(ctx, asker, fitted.State, batch)
+				if errors.Is(err, ErrInputTooLong) {
+					// the estimate was too low for this model: answer what is left window by window
+					var remaining []ToolCall
+					for _, cand := range candidates {
+						if _, done := answers[cand.ID]; !done {
+							remaining = append(remaining, cand)
+						}
+					}
+					stats.Retries++
+					if err := compactWindowed(ctx, messages, calls, remaining, asker, opts, &stats, answers, unfit); err != nil {
+						return Result{}, err
+					}
+					break
+				}
+				if err != nil {
+					return Result{}, err
+				}
+				stats.Requests++
+				stats.InputTokensReported += raw.InputTokens
+				for id, a := range got {
+					answers[id] = a
+				}
 			}
 		}
 	}
 
 	decisions := make([]Decision, 0, len(calls))
 	for _, c := range calls {
+		if unfit[c.ID] {
+			decisions = append(decisions, unfitDecision(c))
+			continue
+		}
 		a, ok := answers[c.ID]
 		if !ok {
 			a = CallAnswer{KeepCall: 1, KeepResult: 1}
@@ -126,4 +162,58 @@ func Compact(ctx context.Context, messages []Message, asker Asker, options Optio
 	stats.ReductionRatio = ReductionRatio(stats)
 	stats.Ms = time.Since(started).Milliseconds()
 	return Result{Messages: kept, Decisions: decisions, Stats: stats}, nil
+}
+
+// maxRetries is how many times a window is rebuilt smaller after the model
+// rejects its input as too long.
+const maxRetries = 2
+
+// retryShrink is the budget factor applied on each retry.
+const retryShrink = 0.85
+
+// compactWindowed is the windowed stage: one state per window of calls, asked
+// in sequence. A window the model rejects as too long is rebuilt with a
+// smaller budget; calls that still do not fit are kept without being asked.
+func compactWindowed(ctx context.Context, messages []Message, calls, candidates []ToolCall, asker Asker,
+	opts ResolvedOptions, stats *Stats, answers map[string]CallAnswer, unfit map[string]bool) error {
+	stats.StateStage = "windowed"
+	var run func(group []ToolCall, shrink float64, retries int) error
+	run = func(group []ToolCall, shrink float64, retries int) error {
+		windows, unfitCalls := BuildWindows(messages, calls, group, opts, shrink)
+		for _, c := range unfitCalls {
+			unfit[c.ID] = true
+		}
+		for _, w := range windows {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			stats.Windows++
+			stats.StateTokens = max(stats.StateTokens, w.Tokens)
+			got, raw, err := askBatch(ctx, asker, w.State, w.Calls)
+			stats.Requests++
+			if errors.Is(err, ErrInputTooLong) {
+				if retries >= maxRetries {
+					for _, c := range w.Calls {
+						unfit[c.ID] = true
+					}
+					continue
+				}
+				stats.Retries++
+				if err := run(w.Calls, shrink*retryShrink, retries+1); err != nil {
+					return err
+				}
+				continue
+			}
+			if err != nil {
+				return err
+			}
+			stats.InputTokensReported += raw.InputTokens
+			stats.InputTokensEstimated += len(w.Calls) * 2 * (w.Tokens + questionSeqTokens(w.Calls, opts))
+			for id, a := range got {
+				answers[id] = a
+			}
+		}
+		return nil
+	}
+	return run(candidates, 1, 0)
 }

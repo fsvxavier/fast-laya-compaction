@@ -46,6 +46,15 @@ func (e HistoryEntry) MarshalJSON() ([]byte, error) {
 		ToolCalls any    `json:"tool_calls,omitempty"`
 	}{I: e.I, Role: e.Role, Text: e.Text}
 	switch {
+	case len(e.Lines) > 0 && len(e.Calls) > 0: // windowed state: structured calls first, then one-liners
+		mixed := make([]any, 0, len(e.Calls)+len(e.Lines))
+		for _, c := range e.Calls {
+			mixed = append(mixed, c)
+		}
+		for _, l := range e.Lines {
+			mixed = append(mixed, l)
+		}
+		out.ToolCalls = mixed
 	case len(e.Lines) > 0:
 		out.ToolCalls = e.Lines
 	case len(e.Calls) > 0:

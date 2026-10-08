@@ -59,7 +59,7 @@ Ordem pensada para cada passo depender só dos anteriores. Cada item: teste port
 
 ---
 
-## Fase 2 — Estágio `windowed`, `unfit` e retries
+## Fase 2 — Estágio `windowed`, `unfit` e retries — **IMPLEMENTADA** (2026-10-08; ver `internal/compaction/window.go`)
 
 1. `resources.go`: extração de recurso (`file_path`, `path`, `notebook_path`, `pattern`, `url`, `command`) do `Input`; testes com inputs de ferramentas reais do Claude Code (`Read`, `Edit`, `Write`, `Bash`, `Grep`, `Glob`, `WebFetch`).
 2. `window.go`: `BuildWindows(messages, calls, candidates, opts) ([]Window, []unfitCall)`:

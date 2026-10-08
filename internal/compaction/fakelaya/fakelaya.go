@@ -20,6 +20,8 @@ type Asker struct {
 	Answer func(id string) float64
 	// Err, if set, is returned by every Ask.
 	Err error
+	// Fail, if set, is consulted with the 0-based request number before answering.
+	Fail func(n int) error
 	// Override, if set, replaces the answers entirely (for malformed-answer tests).
 	Override func(questions []compaction.Question) compaction.Answers
 
@@ -33,8 +35,14 @@ func (a *Asker) Ask(_ context.Context, state compaction.State, questions []compa
 		ids[i] = q.ID
 	}
 	a.mu.Lock()
+	n := len(a.Seen)
 	a.Seen = append(a.Seen, Request{State: state, QuestionIDs: ids})
 	a.mu.Unlock()
+	if a.Fail != nil {
+		if err := a.Fail(n); err != nil {
+			return compaction.Answers{}, err
+		}
+	}
 	if a.Err != nil {
 		return compaction.Answers{}, a.Err
 	}
