@@ -1,0 +1,38 @@
+gremlins-report*.json
+
+# Local secrets (godotenv, pkg/config.Load() reads .env from the repo root
+# silently via `_ = godotenv.Load()`) — never commit real credentials.
+# .env.example stays tracked as the safe, secret-free template.
+.env
+.env.*
+!.env.example
+
+# `go build ./cmd/<x>/...` writes a same-named binary to the repo root when
+# the pattern resolves to a single main package (unlike `go build ./...`,
+# which discards output for multi-package builds) - never a real deliverable.
+/lintopenapi
+
+# `go test -c` writes a compiled test binary named after the package dir
+# (e.g. ingestion.test) - never a real deliverable, and large (tens of MB).
+*.test
+
+# make start/stop/restart/status: local dev binary, pidfile, and log for
+# cmd/rest run in the background - never a committed artifact.
+/bin/
+/logs/
+/*/graphify*
+/*/*/graphify*
+/graphify*
+/*/_old
+
+# cmd/cacaushowprobe writes real production data here (sale amounts, dates,
+# NSU, auth codes — only email/nome/cpf are tokenized) when run against
+# MR2_CACAUSHOW. Manual investigation output, never a committed artifact.
+/project/plan/testdata/
+
+# data/{cacaushow,cielo,banco} (data/README.md) are local staging folders
+# for real third-party files (Cacau Show CSV/XLS, Cielo CSV/XLS/EDI, bank
+# OFX) — never committed, real financial/PII data. Folders themselves stay
+# tracked via .gitkeep so the layout is discoverable from a fresh clone.
+/data/*/*
+!/data/*/.gitkeep
